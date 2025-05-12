@@ -22,9 +22,9 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+//import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -72,7 +72,7 @@ public class VistaJuego implements Observer {
     private ImageView protagonistaView;
     private Escenario escenario;
     private int movimientosRestantes = 15;
-    private static Random r = new Random();
+    //private static Random r = new Random();
     private ArrayList<Enemigo> listaEnemigos = new ArrayList<>();
     private ArrayList<ImageView> vistasEnemigos = new ArrayList<>();
     private Protagonista protagonista;
@@ -307,7 +307,8 @@ public class VistaJuego implements Observer {
     private void moverProtagonista(KeyEvent e) {
         System.out.println("Tecla pulsada: " + e.getCode());
 
-        int dx = 0, dy = 0;
+        int dx = 0;
+        int dy = 0;
         String img = "/com/rodasfiti/images/";
 
         // Determina la dirección en la que se mueve el protagonista
@@ -339,17 +340,44 @@ public class VistaJuego implements Observer {
         int nuevaFila = protagonista.getFila() + dx;
         int nuevaColumna = protagonista.getColumna() + dy;
 
-        // Verifica si el movimiento es válido y si no hay un enemigo en la nueva
-        // posición
+        // Verifica si el movimiento es válido y si no hay un enemigo en la nueva posición
+        boolean enemigoEncontrado = false;
+        Enemigo enemigoAAtacar = null;
+        
         for (Enemigo enemigo : listaEnemigos) {
             if (enemigo.getFila() == nuevaFila && enemigo.getColumna() == nuevaColumna) {
-                System.out.println("Movimiento bloqueado: hay un enemigo en (" + nuevaFila + ", " + nuevaColumna + ")");
-                return;
+                System.out.println("Enemigo encontrado en (" + nuevaFila + ", " + nuevaColumna + ")");
+                enemigoEncontrado = true;
+                enemigoAAtacar = enemigo;
+                break;
             }
+        }
+        
+        // Si hay un enemigo en la casilla destino, atacarlo directamente
+        if (enemigoEncontrado && enemigoAAtacar != null) {
+            System.out.println("Atacando a enemigo: " + enemigoAAtacar.getTipo());
+            if (protagonista.atacarSiCerca(enemigoAAtacar)) {
+                System.out.println("Ataque realizado con éxito");
+                if (enemigoAAtacar.getVida() <= 0) {
+                    System.out.println("Enemigo derrotado");
+                    listaEnemigos.remove(enemigoAAtacar);
+                    mostrarMapa();
+                }
+                
+                if (protagonista.getVida() <= 0) {
+                    System.out.println("El protagonista ha muerto");
+                    SceneManager.getInstance().loadScene(SceneID.FINAL);
+                    return;
+                }
+                
+                actualizarDatosProtagonista();
+                actualizarDatosEnemigos();
+            }
+            return;
         }
 
         // Si el movimiento es válido, mueve al protagonista
-        if (protagonista.mover(dx, dy, escenario)) {
+        if (protagonista.mover(dx, dy, escenario, listaEnemigos)) {
             posX = protagonista.getFila();
             posY = protagonista.getColumna();
 
@@ -362,10 +390,18 @@ public class VistaJuego implements Observer {
             movimientosRestantes--;
             movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
 
+            // Verifica el cambio de nivel
+            if (movimientosRestantes <= 0) {
+                subirNivel();
+                spawnEnemigos(Proveedor.getInstance().getProtagonista().getNivel());
+                movimientosRestantes = 15;
+                movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
+            }
+            
             // Mueve a los enemigos después de que el protagonista se mueve
             moverEnemigos();
 
-            // Verifica si el protagonista está cerca de algún enemigo para atacar
+            // Ahora sí comprobamos si hay enemigos adyacentes para atacar
             detectarYAtacarEnemigos();
         }
 
@@ -373,49 +409,88 @@ public class VistaJuego implements Observer {
         System.out.println("Después de mover: (" + protagonista.getFila() + ", " + protagonista.getColumna() + ")");
     }
 
-    // Método para detectar y atacar a los enemigos si están cerca
     private void detectarYAtacarEnemigos() {
         Protagonista protagonista = Proveedor.getInstance().getProtagonista();
-        ArrayList<Enemigo> enemigosCercanos = new ArrayList<>();
+        ArrayList<Enemigo> enemigosAEliminar = new ArrayList<>();
 
-        // Busca los enemigos cercanos (adyacentes)
+        int filaProta = protagonista.getFila();
+        int colProta = protagonista.getColumna();
+
+        System.out.println("[DEBUG] Posición del protagonista: fila=" + filaProta + ", columna=" + colProta);
+
         for (Enemigo enemigo : listaEnemigos) {
-            int distanciaX = Math.abs(posX - enemigo.getColumna());
-            int distanciaY = Math.abs(posY - enemigo.getFila());
-            if (distanciaX <= 2 && distanciaY <= 2) {
-                enemigosCercanos.add(enemigo); // Si están cerca, los agrega a la lista de enemigos cercanos
+            int filaEnemigo = enemigo.getFila();
+            int colEnemigo = enemigo.getColumna();
+
+            int dx = Math.abs(filaProta - filaEnemigo);
+            int dy = Math.abs(colProta - colEnemigo);
+
+            System.out.println("[DEBUG] Revisando enemigo en fila=" + filaEnemigo + ", columna=" + colEnemigo);
+
+            if ((dx == 1 && dy == 0) || (dx == 0 && dy == 1)) {
+                System.out.println("[DEBUG] Enemigo adyacente encontrado");
+
+                if (protagonista.atacarSiCerca(enemigo)) {
+                    System.out.println("[DEBUG] Combate iniciado con " + enemigo.getTipo());
+
+                    if (enemigo.getVida() <= 0) {
+                        System.out.println("[DEBUG] Enemigo derrotado");
+                        enemigosAEliminar.add(enemigo);
+                    }
+
+                    if (protagonista.getVida() <= 0) {
+                        System.out.println("[DEBUG] El protagonista ha muerto");
+                        SceneManager.getInstance().loadScene(SceneID.FINAL);
+                        return;
+                    }
+                } else {
+                    System.out.println("[DEBUG] El método atacarSiCerca devolvió false");
+                }
             }
         }
 
-        // Si hay enemigos cercanos, realizar ataques
-        for (Enemigo enemigo : enemigosCercanos) {
-            if (protagonista.atacarSiCerca(enemigo)) {
-                // Si el ataque ocurrió, actualiza la interfaz del juego
-                actualizarDatosProtagonista(); // Actualiza la vida y stats del protagonista
-                actualizarDatosEnemigos(); // Actualiza la cantidad de enemigos restantes
-            }
-
-            // Verifica si el protagonista murió después de un ataque
-            if (protagonista.getVida() <= 0) {
-                SceneManager.getInstance().loadScene(SceneID.FINAL); // Carga la escena final si muere
-                break; // Sale del bucle
-            }
-        }
+        // Remover enemigos muertos
+        listaEnemigos.removeAll(enemigosAEliminar);
+        mostrarMapa();
+        actualizarDatosProtagonista();
+        actualizarDatosEnemigos();
     }
 
     private void moverEnemigos() {
-        Set<String> posicionesOcupadas = new HashSet<>();
-        for (Enemigo enemigo : listaEnemigos) {
-            posicionesOcupadas.add(enemigo.getFila() + "," + enemigo.getColumna());
-        }
-
-        posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna());
-        for (Enemigo enemigo : listaEnemigos) {
-            String direccion = enemigo.moverInteligente(posX, posY, escenario, posicionesOcupadas);
-
-        }
-        mostrarEnemigos(50, 50);
+    Set<String> posicionesOcupadas = new HashSet<>();
+    for (Enemigo enemigo : listaEnemigos) {
+        posicionesOcupadas.add(enemigo.getFila() + "," + enemigo.getColumna());
     }
+    posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna());
+
+    for (Enemigo enemigo : listaEnemigos) {
+        String direccion = enemigo.moverInteligente(
+            protagonista.getFila(),
+            protagonista.getColumna(),
+            escenario,
+            posicionesOcupadas
+        );
+
+        // Actualiza la posición si se mueve
+        if (!direccion.equals("QUIETO")) {
+            posicionesOcupadas.remove(enemigo.getFila() + "," + enemigo.getColumna());
+
+            int nuevaFila = enemigo.getFila();
+            int nuevaColumna = enemigo.getColumna();
+
+            posicionesOcupadas.add(nuevaFila + "," + nuevaColumna);
+        }
+
+        // Verifica si está adyacente al protagonista y ataca
+        if (estaAdyacente(enemigo.getFila(), enemigo.getColumna(),
+                          protagonista.getFila(), protagonista.getColumna())) {
+            enemigo.atacar(protagonista);
+        }
+    }
+
+    mostrarEnemigos(50, 50);
+}
+
 
     private boolean puedeMoverA(int x, int y) {
         char[][] mapa = escenario.getMapa();
@@ -434,80 +509,6 @@ public class VistaJuego implements Observer {
             return null;
         }
     }
-
-    /*
-     * private void atacar(Protagonista protagonista, Enemigo enemigo) {
-     * // Verifica si el enemigo está en una celda adyacente
-     * int dx = Math.abs(posX - enemigo.getColumna());
-     * int dy = Math.abs(posY - enemigo.getFila());
-     * 
-     * if ((dx <= 1 && dy <= 1)) {
-     * // El más rápido ataca primero
-     * if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
-     * protagonista.atacar(enemigo);
-     * if (enemigo.getVida() > 0) {
-     * enemigo.atacar(protagonista);
-     * }
-     * } else {
-     * enemigo.atacar(protagonista);
-     * if (protagonista.getVida() > 0) {
-     * protagonista.atacar(enemigo);
-     * }
-     * }
-     * 
-     * // Verifica muertes
-     * if (protagonista.getVida() <= 0) {
-     * protagonista.morir();
-     * }
-     * 
-     * if (enemigo.getVida() <= 0) {
-     * listaEnemigos.remove(enemigo);
-     * mostrarMapa(); // actualizar mapa para quitar enemigo visualmente
-     * }
-     * 
-     * actualizarDatosProtagonista(); // actualiza stats en la UI
-     * }
-     * }
-     */
-    /*
-     * private void detectarYAtacarEnemigos() {
-     * Protagonista protagonista = Proveedor.getInstance().getProtagonista();
-     * ArrayList<Enemigo> enemigosCercanos = new ArrayList<>();
-     * 
-     * for (Enemigo enemigo : listaEnemigos) {
-     * int distanciaX = Math.abs(posX - enemigo.getColumna());
-     * int distanciaY = Math.abs(posY - enemigo.getFila());
-     * if (distanciaX <= 1 && distanciaY <= 1) {
-     * enemigosCercanos.add(enemigo);
-     * }
-     * }
-     * 
-     * for (Enemigo enemigo : enemigosCercanos) {
-     * if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
-     * protagonista.atacar(enemigo);
-     * if (enemigo.getVida() > 0) {
-     * enemigo.atacar(protagonista);
-     * }
-     * } else {
-     * enemigo.atacar(protagonista);
-     * if (protagonista.getVida() > 0) {
-     * protagonista.atacar(enemigo);
-     * }
-     * }
-     * 
-     * if (enemigo.getVida() <= 0) {
-     * listaEnemigos.remove(enemigo);
-     * }
-     * 
-     * if (protagonista.getVida() <= 0) {
-     * SceneManager.getInstance().loadScene(SceneID.FINAL);
-     * break;
-     * }
-     * }
-     * 
-     * actualizarDatosProtagonista(); // Refresca la UI
-     * }
-     */
 
     private void subirNivel() {
         Protagonista protagonista = Proveedor.getInstance().getProtagonista();
@@ -566,6 +567,12 @@ public class VistaJuego implements Observer {
         duendes.setText("Duende: " + dnd);
         esqueletos.setText("Esqueleto: " + eq);
     }
+    private boolean estaAdyacente(int fila1, int col1, int fila2, int col2) {
+    int df = Math.abs(fila1 - fila2);
+    int dc = Math.abs(col1 - col2);
+    return (df + dc == 1); // Está justo arriba, abajo, izquierda o derecha
+}
+
 
     @Override
     public void onChange() {
@@ -574,3 +581,5 @@ public class VistaJuego implements Observer {
 
     }
 }
+
+    

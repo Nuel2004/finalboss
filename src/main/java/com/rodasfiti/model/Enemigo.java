@@ -4,20 +4,20 @@ import java.util.Random;
 import java.util.Set;
 
 public class Enemigo extends Personaje {
-    protected int percepcion;
-    protected TipoEnemigo tipo;
-    protected int fila;
-    protected int columna;
+    private int percepcion;
+    private TipoEnemigo tipo;
+    private int fila;
+    private int columna;
 
-    public Enemigo(TipoEnemigo tipo, int nivel, int ataque, int defensa, int vida, int velocidad, int percepcion, int x,
-            int y) {
-        super(nivel, ataque, defensa, vida, velocidad);
+    public Enemigo(TipoEnemigo tipo, int nivel, int ataque, int defensa, int vida, int velocidad, int percepcion, int fila, int columna) {
+        super(vida, ataque, defensa, nivel, velocidad);
         this.percepcion = percepcion;
         this.tipo = tipo;
-        this.fila = x;
-        this.columna = y;
+        this.fila = fila;
+        this.columna = columna;
     }
 
+    // Getters y setters
     public int getPercepcion() {
         return percepcion;
     }
@@ -26,53 +26,50 @@ public class Enemigo extends Personaje {
         this.percepcion = percepcion;
     }
 
-    public void atacar(Personaje objetivo) {
-        super.atacar(objetivo);
-    }
-
     public TipoEnemigo getTipo() {
-        return this.tipo;
+        return tipo;
     }
 
     public void setTipo(TipoEnemigo tipo) {
         this.tipo = tipo;
     }
 
+    @Override
     public int getFila() {
         return fila;
+    }
+
+    @Override
+    public int getColumna() {
+        return columna;
     }
 
     public void setFila(int fila) {
         this.fila = fila;
     }
 
-    public int getColumna() {
-        return columna;
-    }
-
     public void setColumna(int columna) {
         this.columna = columna;
     }
 
+    @Override
     public void movimiento() {
-
+        // Implementación específica si se desea
     }
 
     public boolean mover(int dx, int dy, Escenario escenario) {
-        int nuevaFila = this.fila + dx;
-        int nuevaColumna = this.columna + dy;
+        int nuevaFila = fila + dx;
+        int nuevaColumna = columna + dy;
         char[][] mapa = escenario.getMapa();
 
-        if (nuevaFila < 0 || nuevaFila >= mapa.length || nuevaColumna < 0 || nuevaColumna >= mapa[0].length) {
-            return false;
-        }
+        if (nuevaFila >= 0 && nuevaFila < mapa.length &&
+            nuevaColumna >= 0 && nuevaColumna < mapa[0].length &&
+            mapa[nuevaFila][nuevaColumna] == 'S') {
 
-        if (mapa[nuevaFila][nuevaColumna] == 'S') {
-            this.fila = nuevaFila;
-            this.columna = nuevaColumna;
+            fila = nuevaFila;
+            columna = nuevaColumna;
             return true;
         }
-
         return false;
     }
 
@@ -82,44 +79,33 @@ public class Enemigo extends Personaje {
         int columnas = mapa[0].length;
         Random rand = new Random();
 
-        int intentos = 0;
-        while (intentos < 1000) {
+        for (int intentos = 0; intentos < 1000; intentos++) {
             int f = rand.nextInt(filas);
             int c = rand.nextInt(columnas);
             String pos = f + "," + c;
             if (mapa[f][c] == 'S' && !posicionesOcupadas.contains(pos)) {
-                this.fila = f;
-                this.columna = c;
+                fila = f;
+                columna = c;
                 System.out.println("Enemigo colocado en: " + pos);
                 return;
             }
-            intentos++;
         }
         System.out.println("No se encontró posición válida para enemigo tras 1000 intentos.");
     }
 
-    public String moverInteligente(int objetivoFila, int objetivoColumna, Escenario escenario,
-            Set<String> posicionesOcupadas) {
+    public String moverInteligente(int objetivoFila, int objetivoColumna, Escenario escenario, Set<String> posicionesOcupadas) {
         int dx = 0, dy = 0;
-        int nuevaFila = fila;
-        int nuevaColumna = columna;
 
         int distanciaX = Math.abs(columna - objetivoColumna);
         int distanciaY = Math.abs(fila - objetivoFila);
 
+        // Movimiento hacia el objetivo si está cerca
         if (distanciaX <= 2 && distanciaY <= 2) {
-            // Perseguir
-            if (fila < objetivoFila)
-                dx = 1;
-            else if (fila > objetivoFila)
-                dx = -1;
-            if (columna < objetivoColumna)
-                dy = 1;
-            else if (columna > objetivoColumna)
-                dy = -1;
+            dx = Integer.compare(objetivoFila, fila);
+            dy = Integer.compare(objetivoColumna, columna);
         } else {
-            int direccion = new Random().nextInt(4);
-            switch (direccion) {
+            // Movimiento aleatorio
+            switch (new Random().nextInt(4)) {
                 case 0:
                     dx = -1;
                     break;
@@ -132,53 +118,49 @@ public class Enemigo extends Personaje {
                 case 3:
                     dy = 1;
                     break;
+                default:
+                    break;
             }
         }
 
-        nuevaFila = fila + dx;
-        nuevaColumna = columna + dy;
-
+        int nuevaFila = fila + dx;
+        int nuevaColumna = columna + dy;
         String nuevaPos = nuevaFila + "," + nuevaColumna;
 
         if (nuevaFila >= 0 && nuevaFila < escenario.getMapa().length &&
-                nuevaColumna >= 0 && nuevaColumna < escenario.getMapa()[0].length &&
-                escenario.getMapa()[nuevaFila][nuevaColumna] == 'S' &&
-                !posicionesOcupadas.contains(nuevaPos)) {
+            nuevaColumna >= 0 && nuevaColumna < escenario.getMapa()[0].length &&
+            escenario.getMapa()[nuevaFila][nuevaColumna] == 'S' &&
+            !posicionesOcupadas.contains(nuevaPos)) {
 
-            this.fila = nuevaFila;
-            this.columna = nuevaColumna;
+            fila = nuevaFila;
+            columna = nuevaColumna;
             posicionesOcupadas.add(nuevaPos);
 
-            if (dx == -1)
-                return "arriba";
-            if (dx == 1)
-                return "abajo";
-            if (dy == -1)
-                return "izquierda";
-            if (dy == 1)
-                return "derecha";
+            if (dx == -1) return "arriba";
+            if (dx == 1) return "abajo";
+            if (dy == -1) return "izquierda";
+            if (dy == 1) return "derecha";
         }
 
         return "quieto";
     }
 
     public boolean atacarSiCerca(Protagonista protagonista) {
-        if (!this.estaCercaDe(protagonista))
+        if (!estaCercaDe(protagonista))
             return false;
 
-        if (this.getVelocidad() >= protagonista.getVelocidad()) {
-            this.atacar(protagonista);
+        if (velocidad >= protagonista.getVelocidad()) {
+            atacar(protagonista);
             if (protagonista.getVida() > 0) {
                 protagonista.atacar(this);
             }
         } else {
             protagonista.atacar(this);
-            if (this.getVida() > 0) {
-                this.atacar(protagonista);
+            if (vida > 0) {
+                atacar(protagonista);
             }
         }
 
         return true;
     }
-
 }

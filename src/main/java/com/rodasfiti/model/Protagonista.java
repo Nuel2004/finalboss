@@ -1,5 +1,7 @@
 package com.rodasfiti.model;
 
+import java.util.List;
+
 public class Protagonista extends Personaje {
 
     private int fila;
@@ -41,27 +43,40 @@ public class Protagonista extends Personaje {
 
     }
 
-    @Override
     public void atacar(Personaje objetivo) {
-
+        super.atacar(objetivo);
     }
 
-    public boolean mover(int dx, int dy, Escenario escenario) {
+    public boolean mover(int dx, int dy, Escenario escenario, List<Enemigo> enemigos) {
         int nuevaFila = this.fila + dx;
         int nuevaColumna = this.columna + dy;
         char[][] mapa = escenario.getMapa();
 
-        if (nuevaFila < 0 || nuevaFila >= mapa.length || nuevaColumna < 0 || nuevaColumna >= mapa[0].length) {
+        if (!puedeMoverA(nuevaFila, nuevaColumna, escenario)) {
             return false;
         }
 
-        if (mapa[nuevaFila][nuevaColumna] == 'S') {
-            this.fila = nuevaFila;
-            this.columna = nuevaColumna;
-            return true;
+        for (Enemigo enemigo : enemigos) {
+            if (enemigo.getFila() == nuevaFila && enemigo.getColumna() == nuevaColumna) {
+                System.out.println("¡Enemigo detectado! Iniciando combate...");
+                this.atacarSiCerca(enemigo);
+
+                if (enemigo.getVida() <= 0) {
+                    enemigos.remove(enemigo);
+                    System.out.println("¡Has vencido al enemigo y puedes avanzar!");
+                    this.fila = nuevaFila;
+                    this.columna = nuevaColumna;
+                    return true;
+                } else {
+                    System.out.println("El enemigo sigue vivo. Movimiento bloqueado.");
+                    return false;
+                }
+            }
         }
 
-        return false;
+        this.fila = nuevaFila;
+        this.columna = nuevaColumna;
+        return true;
     }
 
     public boolean puedeMoverA(int nuevaFila, int nuevaColumna, Escenario escenario) {
@@ -114,6 +129,6 @@ public class Protagonista extends Personaje {
         }
 
         return true;
-    } 
+    }
 
 }

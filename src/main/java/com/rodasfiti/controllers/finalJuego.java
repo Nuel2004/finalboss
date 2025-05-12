@@ -9,7 +9,6 @@ import java.net.URL;
 
 import com.rodasfiti.SceneID;
 import com.rodasfiti.SceneManager;
-
 import javafx.fxml.FXML;
 
 public class finalJuego {
@@ -19,7 +18,7 @@ public class finalJuego {
     private Button volverAjugar;
 
     @FXML
-    private MediaView musica;
+    private MediaView musicaFinal;
 
     @FXML
     private MediaPlayer mediaPlayer;
@@ -32,18 +31,22 @@ public class finalJuego {
             }
             SceneManager.getInstance().loadScene(SceneID.MAINVISTA);
         });
+
         salir.setOnAction(event -> {
             SceneManager.getInstance().getStage().close();
         });
-        cargarMusica();
+        //cargarMusica();
     }
 
     private void cargarMusica() {
         URL resource = getClass().getResource("/com/rodasfiti/media/final.mp3");
+        System.out.println("Ruta de audio: " + resource); // Agrega esta línea
+
         if (resource != null) {
             Media sound = new Media(resource.toExternalForm());
-            MediaPlayer mediaPlayer = new MediaPlayer(sound);
+            mediaPlayer = new MediaPlayer(sound);
             mediaPlayer.play();
+            musicaFinal.setMediaPlayer(mediaPlayer);
         } else {
             System.err.println("No se pudo cargar el recurso de audio.");
         }

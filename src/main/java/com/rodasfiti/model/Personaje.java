@@ -12,7 +12,8 @@ public abstract class Personaje {
     protected int defensa;
     protected int nivel;
     protected int velocidad;
-    protected static Random r = new Random();
+    private static final Random random = new Random();
+
     public abstract int getFila();
     public abstract int getColumna();
 
@@ -25,18 +26,20 @@ public abstract class Personaje {
         this.observers = new ArrayList<>();
     }
 
-    public void suscribe(Observer observer) {
+    // Observer pattern
+    public void subscribe(Observer observer) {
         observers.add(observer);
     }
 
-    public void unsuscribe(Observer observer) {
+    public void unsubscribe(Observer observer) {
         observers.remove(observer);
     }
 
     public void notifyObservers() {
-        observers.forEach(x -> x.onChange());
+        observers.forEach(Observer::onChange);
     }
 
+    // Getters y setters
     public String getNombre() {
         return this.nombre;
     }
@@ -53,7 +56,6 @@ public abstract class Personaje {
     public void setVida(int vida) {
         this.vida = vida;
         notifyObservers();
-
     }
 
     public int getAtaque() {
@@ -63,7 +65,6 @@ public abstract class Personaje {
     public void setAtaque(int ataque) {
         this.ataque = ataque;
         notifyObservers();
-
     }
 
     public int getDefensa() {
@@ -73,7 +74,6 @@ public abstract class Personaje {
     public void setDefensa(int defensa) {
         this.defensa = defensa;
         notifyObservers();
-
     }
 
     public int getVelocidad() {
@@ -82,6 +82,16 @@ public abstract class Personaje {
 
     public void setVelocidad(int velocidad) {
         this.velocidad = velocidad;
+        notifyObservers();
+    }
+
+    public int getNivel() {
+        return this.nivel;
+    }
+
+    public void setNivel(int nivel) {
+        this.nivel = nivel;
+        notifyObservers();
     }
 
     public ArrayList<Observer> getObservers() {
@@ -90,28 +100,37 @@ public abstract class Personaje {
 
     public void setObservers(ArrayList<Observer> observers) {
         this.observers = observers;
-    }
-
-    public int getNivel() {
-        return nivel;
-    }
-
-    public void setNivel(int nivel) {
-        this.nivel = nivel;
         notifyObservers();
     }
 
+    // Lógica de combate
     public void atacar(Personaje objetivo) {
-        if (r.nextInt(10) > objetivo.getDefensa()) {
+        if (random.nextInt(10) > objetivo.getDefensa()) {
             int nuevaVida = objetivo.getVida() - this.ataque;
             objetivo.setVida(Math.max(0, nuevaVida));
+            System.out.println(this.nombre + " ha atacado a " + objetivo.getNombre() + " causando " + this.ataque + " de daño.");
+        } else {
+            System.out.println(this.nombre + " falló el ataque contra " + objetivo.getNombre());
         }
     }
 
-    public void morir() {
-        if (getVida() <= 0) {
-            System.out.println("El personaje ha muerto");
+    public boolean atacarSiCerca(Personaje objetivo) {
+        if (!this.estaCercaDe(objetivo))
+            return false;
+
+        if (this.getVelocidad() >= objetivo.getVelocidad()) {
+            this.atacar(objetivo);
+            if (objetivo.getVida() > 0) {
+                objetivo.atacar(this);
+            }
+        } else {
+            objetivo.atacar(this);
+            if (this.getVida() > 0) {
+                this.atacar(objetivo);
+            }
         }
+
+        return true;
     }
 
     public boolean estaCercaDe(Personaje otro) {
@@ -120,6 +139,15 @@ public abstract class Personaje {
         return dx <= 1 && dy <= 1;
     }
 
+    // Acción de morir
+    public void morir() {
+        if (getVida() <= 0) {
+            System.out.println(this.nombre + " ha muerto.");
+        }
+    }
+
+    // Método abstracto que puede sobreescribirse en subclases
     public void movimiento() {
+        // Implementación vacía por defecto
     }
 }
