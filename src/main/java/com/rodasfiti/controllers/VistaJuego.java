@@ -114,16 +114,16 @@ public class VistaJuego implements Observer {
         } else {
             System.err.println("No se pudo cargar el escenario.");
         }
-        if (movimientosRestantes<=0){
+        if (movimientosRestantes <= 0) {
             subirNivel();
             spawnEnemigos(Proveedor.getInstance().getProtagonista().getNivel());
             movimientosRestantes = 15;
             movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
         }
-        
+
         actualizarDatosEnemigos();
         contenedorMapa.getChildren().add(mainGrid);
-        
+
         mover();
 
         System.out.println(">>> [FIN initialize()]");
@@ -131,7 +131,7 @@ public class VistaJuego implements Observer {
 
     public void actualizarDatosProtagonista() {
         Protagonista protagonista = Proveedor.getInstance().getProtagonista();
-        nombrePersonaje.setText(protagonista.getNombre()); 
+        nombrePersonaje.setText(protagonista.getNombre());
         vida.setText(String.valueOf(protagonista.getVida()));
         ataque.setText(String.valueOf(protagonista.getAtaque()));
         escudo.setText(String.valueOf(protagonista.getDefensa()));
@@ -184,89 +184,84 @@ public class VistaJuego implements Observer {
         mostrarEnemigos(ancho, alto);
     }
 
-    
     private void spawnEnemigos(int cantidad) {
-    ArrayList<Enemigo> enemigosDesdeCSV =
-    GestorEnemigos.cargarEnemigosDesdeCSV("/com/rodasfiti/data/enemigos.csv");
-    ArrayList<Enemigo> enemigosASpawn = new ArrayList<>();
-    int enemigosCreados = 0;
-    ArrayList<Enemigo> duendes = new ArrayList<>();
-    ArrayList<Enemigo> orcos = new ArrayList<>();
-    ArrayList<Enemigo> esqueletos = new ArrayList<>();
-    
-    for (Enemigo enemigo : enemigosDesdeCSV) {
-    switch (enemigo.getTipo()) {
-    case DUENDE:
-    duendes.add(enemigo);
-    break;
-    case ORCO:
-    orcos.add(enemigo);
-    break;
-    case ESQUELETO:
-    esqueletos.add(enemigo);
-    break;
+        ArrayList<Enemigo> enemigosDesdeCSV = GestorEnemigos.cargarEnemigosDesdeCSV("/com/rodasfiti/data/enemigos.csv");
+        ArrayList<Enemigo> enemigosASpawn = new ArrayList<>();
+        int enemigosCreados = 0;
+        ArrayList<Enemigo> duendes = new ArrayList<>();
+        ArrayList<Enemigo> orcos = new ArrayList<>();
+        ArrayList<Enemigo> esqueletos = new ArrayList<>();
+
+        for (Enemigo enemigo : enemigosDesdeCSV) {
+            switch (enemigo.getTipo()) {
+                case DUENDE:
+                    duendes.add(enemigo);
+                    break;
+                case ORCO:
+                    orcos.add(enemigo);
+                    break;
+                case ESQUELETO:
+                    esqueletos.add(enemigo);
+                    break;
+            }
+        }
+
+        ArrayList<Enemigo> todos = new ArrayList<>();
+        todos.addAll(duendes);
+        todos.addAll(orcos);
+        todos.addAll(esqueletos);
+
+        Random r = new Random();
+        while (enemigosCreados < cantidad) {
+            Enemigo base = todos.get(r.nextInt(todos.size()));
+
+            int intentos = 0;
+            while (intentos < 100) {
+                int x = r.nextInt(escenario.getMapa().length);
+                int y = r.nextInt(escenario.getMapa()[0].length);
+                if (esPosicionValida(x, y)) {
+                    enemigosASpawn.add(new Enemigo(
+                            base.getTipo(),
+                            base.getNivel(),
+                            base.getAtaque(),
+                            base.getDefensa(),
+                            base.getVida(),
+                            base.getVelocidad(),
+                            base.getPercepcion(),
+                            x, y));
+                    enemigosCreados++;
+                    break;
+                }
+                intentos++;
+            }
+        }
+
+        listaEnemigos.clear();
+        listaEnemigos.addAll(enemigosASpawn);
+        vistasEnemigos.clear();
+        mostrarMapa();
     }
-    }
-    
-    ArrayList<Enemigo> todos = new ArrayList<>();
-    todos.addAll(duendes);
-    todos.addAll(orcos);
-    todos.addAll(esqueletos);
-    
-    Random r = new Random();
-    while (enemigosCreados < cantidad) {
-    Enemigo base = todos.get(r.nextInt(todos.size()));
-    
-    
-    int intentos = 0;
-    while (intentos < 100) {
-    int x = r.nextInt(escenario.getMapa().length);
-    int y = r.nextInt(escenario.getMapa()[0].length);
-    if (esPosicionValida(x, y)) {
-    enemigosASpawn.add(new Enemigo(
-    base.getTipo(),
-    base.getNivel(),
-    base.getAtaque(),
-    base.getDefensa(),
-    base.getVida(),
-    base.getVelocidad(),
-    base.getPercepcion(),
-    x, y));
-    enemigosCreados++;
-    break;
-    }
-    intentos++;
-    }
-    }
-    
-    listaEnemigos.clear();
-    listaEnemigos.addAll(enemigosASpawn);
-    vistasEnemigos.clear();
-    mostrarMapa();
-    }
-    
 
     private boolean esPosicionValida(int x, int y) {
         return x >= 0 && y >= 0 && x < escenario.getMapa().length && y < escenario.getMapa()[0].length
                 && puedeMoverA(x, y) && !(x == posX && y == posY);
     }
 
-    
     private void mostrarEnemigos(int ancho, int alto) {
         char[][] mapa = escenario.getMapa();
         int filas = mapa.length;
         int columnas = mapa[0].length;
-         ancho = 973 / columnas;
-         alto = 673 / filas;
-        
+        ancho = 973 / columnas;
+        alto = 673 / filas;
+
         mainGrid.getChildren().removeAll(vistasEnemigos);
         vistasEnemigos.clear();
-    
+
         for (Enemigo enemigo : listaEnemigos) {
-            
+
             if (puedeMoverA(enemigo.getColumna(), enemigo.getFila())) {
                 String imagen = "/com/rodasfiti/images/";
-    
+
                 switch (enemigo.getTipo()) {
                     case ORCO:
                         imagen += "orco.png";
@@ -281,17 +276,17 @@ public class VistaJuego implements Observer {
                         imagen += "duende.png";
                         break;
                 }
-    
+
                 try {
-                    
+
                     Image enemigoImagen = cargarImagen(imagen);
                     ImageView enemigoView = new ImageView(enemigoImagen);
                     enemigoView.setFitWidth(ancho);
                     enemigoView.setFitHeight(alto);
-                    
+
                     mainGrid.add(enemigoView, enemigo.getColumna(), enemigo.getFila());
                     vistasEnemigos.add(enemigoView);
-    
+
                     System.out.println("Enemigo añadido en: X=" + enemigo.getColumna() + ", Y=" +
                             enemigo.getFila() + ", Tipo=" + enemigo.getTipo());
                 } catch (Exception e) {
@@ -301,7 +296,6 @@ public class VistaJuego implements Observer {
             }
         }
     }
-    
 
     private void mover() {
         contenedorMapa.setFocusTraversable(true);
@@ -309,13 +303,14 @@ public class VistaJuego implements Observer {
         contenedorMapa.setOnKeyPressed(this::moverProtagonista);
     }
 
+    // Método para mover al protagonista
     private void moverProtagonista(KeyEvent e) {
         System.out.println("Tecla pulsada: " + e.getCode());
 
         int dx = 0, dy = 0;
-
         String img = "/com/rodasfiti/images/";
 
+        // Determina la dirección en la que se mueve el protagonista
         switch (e.getCode()) {
             case W:
             case UP:
@@ -338,61 +333,96 @@ public class VistaJuego implements Observer {
                 img += "caballero_derecha.png";
                 break;
             default:
-                return;
+                return; // No hace nada si no es una tecla válida
         }
+
         int nuevaFila = protagonista.getFila() + dx;
-       int nuevaColumna = protagonista.getColumna() + dy;
+        int nuevaColumna = protagonista.getColumna() + dy;
 
+        // Verifica si el movimiento es válido y si no hay un enemigo en la nueva
+        // posición
+        for (Enemigo enemigo : listaEnemigos) {
+            if (enemigo.getFila() == nuevaFila && enemigo.getColumna() == nuevaColumna) {
+                System.out.println("Movimiento bloqueado: hay un enemigo en (" + nuevaFila + ", " + nuevaColumna + ")");
+                return;
+            }
+        }
 
-for (Enemigo enemigo : listaEnemigos) {
-    if (enemigo.getFila() == nuevaFila && enemigo.getColumna() == nuevaColumna) {
-        System.out.println("Movimiento bloqueado: hay un enemigo en (" + nuevaFila + ", " + nuevaColumna + ")");
-        return; 
-    }
-}
-
+        // Si el movimiento es válido, mueve al protagonista
         if (protagonista.mover(dx, dy, escenario)) {
-
             posX = protagonista.getFila();
             posY = protagonista.getColumna();
 
+            // Actualiza la imagen del protagonista y su posición en el mapa
             protagonistaView.setImage(cargarImagen(img));
-
             mainGrid.getChildren().remove(protagonistaView);
             mainGrid.add(protagonistaView, posY, posX);
 
+            // Actualiza los movimientos restantes
             movimientosRestantes--;
             movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
+
+            // Mueve a los enemigos después de que el protagonista se mueve
             moverEnemigos();
+
+            // Verifica si el protagonista está cerca de algún enemigo para atacar
+            detectarYAtacarEnemigos();
         }
 
         System.out.println("Intentando mover a (" + dx + ", " + dy + ")");
         System.out.println("Después de mover: (" + protagonista.getFila() + ", " + protagonista.getColumna() + ")");
     }
 
-    private void moverEnemigos() {
-        Set<String> posicionesOcupadas = new HashSet<>();
-for (Enemigo enemigo : listaEnemigos) {
-    posicionesOcupadas.add(enemigo.getFila() + "," + enemigo.getColumna());
-}
+    // Método para detectar y atacar a los enemigos si están cerca
+    private void detectarYAtacarEnemigos() {
+        Protagonista protagonista = Proveedor.getInstance().getProtagonista();
+        ArrayList<Enemigo> enemigosCercanos = new ArrayList<>();
 
-posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna());
+        // Busca los enemigos cercanos (adyacentes)
         for (Enemigo enemigo : listaEnemigos) {
-            String direccion = enemigo.moverInteligente(posX, posY, escenario, posicionesOcupadas);
-            
-           
+            int distanciaX = Math.abs(posX - enemigo.getColumna());
+            int distanciaY = Math.abs(posY - enemigo.getFila());
+            if (distanciaX <= 2 && distanciaY <= 2) {
+                enemigosCercanos.add(enemigo); // Si están cerca, los agrega a la lista de enemigos cercanos
+            }
         }
-        mostrarEnemigos(50, 50); 
+
+        // Si hay enemigos cercanos, realizar ataques
+        for (Enemigo enemigo : enemigosCercanos) {
+            if (protagonista.atacarSiCerca(enemigo)) {
+                // Si el ataque ocurrió, actualiza la interfaz del juego
+                actualizarDatosProtagonista(); // Actualiza la vida y stats del protagonista
+                actualizarDatosEnemigos(); // Actualiza la cantidad de enemigos restantes
+            }
+
+            // Verifica si el protagonista murió después de un ataque
+            if (protagonista.getVida() <= 0) {
+                SceneManager.getInstance().loadScene(SceneID.FINAL); // Carga la escena final si muere
+                break; // Sale del bucle
+            }
+        }
     }
 
+    private void moverEnemigos() {
+        Set<String> posicionesOcupadas = new HashSet<>();
+        for (Enemigo enemigo : listaEnemigos) {
+            posicionesOcupadas.add(enemigo.getFila() + "," + enemigo.getColumna());
+        }
 
+        posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna());
+        for (Enemigo enemigo : listaEnemigos) {
+            String direccion = enemigo.moverInteligente(posX, posY, escenario, posicionesOcupadas);
+
+        }
+        mostrarEnemigos(50, 50);
+    }
 
     private boolean puedeMoverA(int x, int y) {
         char[][] mapa = escenario.getMapa();
         if (x < 0 || x >= mapa.length || y < 0 || y >= mapa[0].length) {
             return false;
         }
-        return mapa[x][y] == 'S'; 
+        return mapa[x][y] == 'S';
     }
 
     private Image cargarImagen(String ruta) {
@@ -405,76 +435,79 @@ posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna())
         }
     }
 
-    /*private void atacar(Protagonista protagonista, Enemigo enemigo) {
-        // Verifica si el enemigo está en una celda adyacente
-        int dx = Math.abs(posX - enemigo.getColumna());
-        int dy = Math.abs(posY - enemigo.getFila());
-
-        if ((dx <= 1 && dy <= 1)) {
-            // El más rápido ataca primero
-            if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
-                protagonista.atacar(enemigo);
-                if (enemigo.getVida() > 0) {
-                    enemigo.atacar(protagonista);
-                }
-            } else {
-                enemigo.atacar(protagonista);
-                if (protagonista.getVida() > 0) {
-                    protagonista.atacar(enemigo);
-                }
-            }
-
-            // Verifica muertes
-            if (protagonista.getVida() <= 0) {
-                protagonista.morir();
-            }
-
-            if (enemigo.getVida() <= 0) {
-                listaEnemigos.remove(enemigo);
-                mostrarMapa(); // actualizar mapa para quitar enemigo visualmente
-            }
-
-            actualizarDatosProtagonista(); // actualiza stats en la UI
-        }
-    } */
-    
-    private void detectarYAtacarEnemigos() {
-        Protagonista protagonista = Proveedor.getInstance().getProtagonista();
-        ArrayList<Enemigo> enemigosCercanos = new ArrayList<>();
-
-        for (Enemigo enemigo : listaEnemigos) {
-            int distanciaX = Math.abs(posX - enemigo.getColumna());
-            int distanciaY = Math.abs(posY - enemigo.getFila());
-            if (distanciaX <= 1 && distanciaY <= 1) {
-                enemigosCercanos.add(enemigo);
-            }
-        }
-
-        for (Enemigo enemigo : enemigosCercanos) {
-            if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
-                protagonista.atacar(enemigo);
-                if (enemigo.getVida() > 0) {
-                    enemigo.atacar(protagonista);
-                }
-            } else {
-                enemigo.atacar(protagonista);
-                if (protagonista.getVida() > 0) {
-                    protagonista.atacar(enemigo);
-                }
-            }
-
-            if (enemigo.getVida() <= 0) {
-                listaEnemigos.remove(enemigo);
-            }
-
-            if (protagonista.getVida() <= 0) {
-                SceneManager.getInstance().loadScene(SceneID.FINAL);
-                break;
-            }
-        }
-
-        actualizarDatosProtagonista(); // Refresca la UI
-    }
+    /*
+     * private void atacar(Protagonista protagonista, Enemigo enemigo) {
+     * // Verifica si el enemigo está en una celda adyacente
+     * int dx = Math.abs(posX - enemigo.getColumna());
+     * int dy = Math.abs(posY - enemigo.getFila());
+     * 
+     * if ((dx <= 1 && dy <= 1)) {
+     * // El más rápido ataca primero
+     * if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
+     * protagonista.atacar(enemigo);
+     * if (enemigo.getVida() > 0) {
+     * enemigo.atacar(protagonista);
+     * }
+     * } else {
+     * enemigo.atacar(protagonista);
+     * if (protagonista.getVida() > 0) {
+     * protagonista.atacar(enemigo);
+     * }
+     * }
+     * 
+     * // Verifica muertes
+     * if (protagonista.getVida() <= 0) {
+     * protagonista.morir();
+     * }
+     * 
+     * if (enemigo.getVida() <= 0) {
+     * listaEnemigos.remove(enemigo);
+     * mostrarMapa(); // actualizar mapa para quitar enemigo visualmente
+     * }
+     * 
+     * actualizarDatosProtagonista(); // actualiza stats en la UI
+     * }
+     * }
+     */
+    /*
+     * private void detectarYAtacarEnemigos() {
+     * Protagonista protagonista = Proveedor.getInstance().getProtagonista();
+     * ArrayList<Enemigo> enemigosCercanos = new ArrayList<>();
+     * 
+     * for (Enemigo enemigo : listaEnemigos) {
+     * int distanciaX = Math.abs(posX - enemigo.getColumna());
+     * int distanciaY = Math.abs(posY - enemigo.getFila());
+     * if (distanciaX <= 1 && distanciaY <= 1) {
+     * enemigosCercanos.add(enemigo);
+     * }
+     * }
+     * 
+     * for (Enemigo enemigo : enemigosCercanos) {
+     * if (protagonista.getVelocidad() >= enemigo.getVelocidad()) {
+     * protagonista.atacar(enemigo);
+     * if (enemigo.getVida() > 0) {
+     * enemigo.atacar(protagonista);
+     * }
+     * } else {
+     * enemigo.atacar(protagonista);
+     * if (protagonista.getVida() > 0) {
+     * protagonista.atacar(enemigo);
+     * }
+     * }
+     * 
+     * if (enemigo.getVida() <= 0) {
+     * listaEnemigos.remove(enemigo);
+     * }
+     * 
+     * if (protagonista.getVida() <= 0) {
+     * SceneManager.getInstance().loadScene(SceneID.FINAL);
+     * break;
+     * }
+     * }
+     * 
+     * actualizarDatosProtagonista(); // Refresca la UI
+     * }
+     */
 
     private void subirNivel() {
         Protagonista protagonista = Proveedor.getInstance().getProtagonista();
@@ -486,7 +519,7 @@ posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna())
         actualizarDatosProtagonista();
         cargarMusica();
     }
-    
+
     private void cargarMusica() {
         try {
             // Ruta fija (recomendado si sabes el nombre del archivo)
@@ -508,24 +541,25 @@ posicionesOcupadas.add(protagonista.getFila() + "," + protagonista.getColumna())
             System.err.println("Error al cargar audio: " + e.getMessage());
         }
     }
-    public void actualizarDatosEnemigos(){
+
+    public void actualizarDatosEnemigos() {
         int eq = 0;
         int or = 0;
         int dnd = 0;
         for (Enemigo enemigo : listaEnemigos) {
             switch (enemigo.getTipo()) {
-                    case ORCO:
-                        or++;
-                        break;
-                    case DUENDE:
-                        dnd++;
-                        break;
-                    case ESQUELETO:
-                        eq++;
-                        break;
-                    default:
-                        
-                        break;
+                case ORCO:
+                    or++;
+                    break;
+                case DUENDE:
+                    dnd++;
+                    break;
+                case ESQUELETO:
+                    eq++;
+                    break;
+                default:
+
+                    break;
             }
         }
         orcos.setText("Orco: " + or);

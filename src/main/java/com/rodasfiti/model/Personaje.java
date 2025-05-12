@@ -13,13 +13,15 @@ public abstract class Personaje {
     protected int nivel;
     protected int velocidad;
     protected static Random r = new Random();
+    public abstract int getFila();
+    public abstract int getColumna();
 
     public Personaje(int vida, int ataque, int defensa, int nivel, int velocidad) {
         this.vida = vida;
         this.ataque = ataque;
         this.defensa = defensa;
         this.nivel = nivel;
-        this.velocidad= velocidad;
+        this.velocidad = velocidad;
         this.observers = new ArrayList<>();
     }
 
@@ -51,7 +53,7 @@ public abstract class Personaje {
     public void setVida(int vida) {
         this.vida = vida;
         notifyObservers();
-        
+
     }
 
     public int getAtaque() {
@@ -61,7 +63,7 @@ public abstract class Personaje {
     public void setAtaque(int ataque) {
         this.ataque = ataque;
         notifyObservers();
-        
+
     }
 
     public int getDefensa() {
@@ -71,7 +73,7 @@ public abstract class Personaje {
     public void setDefensa(int defensa) {
         this.defensa = defensa;
         notifyObservers();
-        
+
     }
 
     public int getVelocidad() {
@@ -102,7 +104,7 @@ public abstract class Personaje {
     public void atacar(Personaje objetivo) {
         if (r.nextInt(10) > objetivo.getDefensa()) {
             int nuevaVida = objetivo.getVida() - this.ataque;
-            objetivo.setVida(Math.max(0, nuevaVida)); 
+            objetivo.setVida(Math.max(0, nuevaVida));
         }
     }
 
@@ -111,6 +113,13 @@ public abstract class Personaje {
             System.out.println("El personaje ha muerto");
         }
     }
+
+    public boolean estaCercaDe(Personaje otro) {
+        int dx = Math.abs(this.getColumna() - otro.getColumna());
+        int dy = Math.abs(this.getFila() - otro.getFila());
+        return dx <= 1 && dy <= 1;
+    }
+
     public void movimiento() {
     }
 }

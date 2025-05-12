@@ -43,7 +43,7 @@ public class Protagonista extends Personaje {
 
     @Override
     public void atacar(Personaje objetivo) {
-        super.atacar(objetivo);
+
     }
 
     public boolean mover(int dx, int dy, Escenario escenario) {
@@ -96,5 +96,24 @@ public class Protagonista extends Personaje {
             }
         }
     }
+
+    public boolean atacarSiCerca(Enemigo enemigo) {
+        if (!this.estaCercaDe(enemigo))
+            return false;
+
+        if (this.getVelocidad() >= enemigo.getVelocidad()) {
+            this.atacar(enemigo);
+            if (enemigo.getVida() > 0) {
+                enemigo.atacar(this);
+            }
+        } else {
+            enemigo.atacar(this);
+            if (this.getVida() > 0) {
+                this.atacar(enemigo);
+            }
+        }
+
+        return true;
+    } 
 
 }
