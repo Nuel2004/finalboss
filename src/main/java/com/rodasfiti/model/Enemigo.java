@@ -9,7 +9,8 @@ public class Enemigo extends Personaje {
     private int fila;
     private int columna;
 
-    public Enemigo(TipoEnemigo tipo, int nivel, int ataque, int defensa, int vida, int velocidad, int percepcion, int fila, int columna) {
+    public Enemigo(TipoEnemigo tipo, int nivel, int ataque, int defensa, int vida, int velocidad, int percepcion,
+            int fila, int columna) {
         super(vida, ataque, defensa, nivel, velocidad);
         this.percepcion = percepcion;
         this.tipo = tipo;
@@ -63,8 +64,8 @@ public class Enemigo extends Personaje {
         char[][] mapa = escenario.getMapa();
 
         if (nuevaFila >= 0 && nuevaFila < mapa.length &&
-            nuevaColumna >= 0 && nuevaColumna < mapa[0].length &&
-            mapa[nuevaFila][nuevaColumna] == 'S') {
+                nuevaColumna >= 0 && nuevaColumna < mapa[0].length &&
+                mapa[nuevaFila][nuevaColumna] == 'S') {
 
             fila = nuevaFila;
             columna = nuevaColumna;
@@ -93,7 +94,8 @@ public class Enemigo extends Personaje {
         System.out.println("No se encontró posición válida para enemigo tras 1000 intentos.");
     }
 
-    public String moverInteligente(int objetivoFila, int objetivoColumna, Escenario escenario, Set<String> posicionesOcupadas) {
+    public String moverInteligente(int objetivoFila, int objetivoColumna, Escenario escenario,
+            Set<String> posicionesOcupadas) {
         int dx = 0, dy = 0;
 
         int distanciaX = Math.abs(columna - objetivoColumna);
@@ -128,39 +130,45 @@ public class Enemigo extends Personaje {
         String nuevaPos = nuevaFila + "," + nuevaColumna;
 
         if (nuevaFila >= 0 && nuevaFila < escenario.getMapa().length &&
-            nuevaColumna >= 0 && nuevaColumna < escenario.getMapa()[0].length &&
-            escenario.getMapa()[nuevaFila][nuevaColumna] == 'S' &&
-            !posicionesOcupadas.contains(nuevaPos)) {
+                nuevaColumna >= 0 && nuevaColumna < escenario.getMapa()[0].length &&
+                escenario.getMapa()[nuevaFila][nuevaColumna] == 'S' &&
+                !posicionesOcupadas.contains(nuevaPos)) {
 
             fila = nuevaFila;
             columna = nuevaColumna;
             posicionesOcupadas.add(nuevaPos);
 
-            if (dx == -1) return "arriba";
-            if (dx == 1) return "abajo";
-            if (dy == -1) return "izquierda";
-            if (dy == 1) return "derecha";
+            if (dx == -1)
+                return "arriba";
+            if (dx == 1)
+                return "abajo";
+            if (dy == -1)
+                return "izquierda";
+            if (dy == 1)
+                return "derecha";
         }
 
         return "quieto";
     }
 
-    public boolean atacarSiCerca(Protagonista protagonista) {
-        if (!estaCercaDe(protagonista))
-            return false;
-
-        if (velocidad >= protagonista.getVelocidad()) {
-            atacar(protagonista);
-            if (protagonista.getVida() > 0) {
-                protagonista.atacar(this);
-            }
-        } else {
-            protagonista.atacar(this);
-            if (vida > 0) {
-                atacar(protagonista);
-            }
-        }
-
-        return true;
-    }
+    /*
+     * public boolean atacarSiCerca(Protagonista protagonista) {
+     * if (!estaCercaDe(protagonista))
+     * return false;
+     * 
+     * if (velocidad >= protagonista.getVelocidad()) {
+     * atacar(protagonista);
+     * if (protagonista.getVida() > 0) {
+     * protagonista.atacar(this);
+     * }
+     * } else {
+     * protagonista.atacar(this);
+     * if (vida > 0) {
+     * atacar(protagonista);
+     * }
+     * }
+     * 
+     * return true;
+     * }
+     */
 }
