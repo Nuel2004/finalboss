@@ -117,7 +117,7 @@ public class Protagonista extends Personaje {
             return false;
         }
 
-        if (mapa[nuevaFila][nuevaColumna] == 'S') {
+        if (mapa[nuevaFila][nuevaColumna] == 'S'||mapa[nuevaFila][nuevaColumna]=='T') {
             this.fila = nuevaFila;
             this.columna = nuevaColumna;
             return true;

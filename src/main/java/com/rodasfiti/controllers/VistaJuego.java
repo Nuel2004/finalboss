@@ -196,6 +196,8 @@ public class VistaJuego implements Observer {
 
             // Mostrar el mapa en la vista
             mostrarMapa();
+            
+            
         } else {
             System.err.println("No se pudo cargar el escenario.");
         }
@@ -264,14 +266,17 @@ public class VistaJuego implements Observer {
 
         Image imagenPared = cargarImagen("/com/rodasfiti/images/pared2.png");
         Image imagenSuelo = cargarImagen("/com/rodasfiti/images/suelo2.png");
+        Image imageTrampa = cargarImagen("/com/rodasfiti/images/suelo.png");
 
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
                 ImageView bloque;
                 if (mapa[i][j] == 'P') {
                     bloque = new ImageView(imagenPared);
-                } else {
+                } else if(mapa[i][j] == 'S'){
                     bloque = new ImageView(imagenSuelo);
+                } else{
+                    bloque = new ImageView(imageTrampa);
                 }
                 bloque.setFitWidth(ancho);
                 bloque.setFitHeight(alto);
@@ -502,7 +507,7 @@ public class VistaJuego implements Observer {
         }
 
         if (protagonista.mover(dx, dy, escenario)) {
-
+            
             posX = protagonista.getFila();
             posY = protagonista.getColumna();
 
@@ -510,10 +515,9 @@ public class VistaJuego implements Observer {
 
             mainGrid.getChildren().remove(protagonistaView);
             mainGrid.add(protagonistaView, posY, posX);
-
             movimientosRestantes--;
             movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
-
+            casillaTrampa(protagonista.getFila(), protagonista.getColumna());
             // Verifica si los movimientos han llegado a 0
             if (movimientosRestantes <= 0) {
                 c++;
@@ -522,7 +526,6 @@ public class VistaJuego implements Observer {
                 movimientosRestantes = 15;
                 movimientosFaltantes.setText(String.valueOf(movimientosRestantes));
             }
-
             moverEnemigos();
         }
 
@@ -640,7 +643,7 @@ public class VistaJuego implements Observer {
         char[][] mapa = escenario.getMapa();
         return fila >= 0 && fila < mapa.length &&
                 columna >= 0 && columna < mapa[0].length &&
-                mapa[fila][columna] == 'S';
+                mapa[fila][columna] == 'S' || mapa[fila][columna] == 'T';
     }
 
     /**
@@ -744,6 +747,23 @@ public class VistaJuego implements Observer {
             mediaPlayer1.stop(); // Detiene la música actual.
         }
         cargarMusica();
+    }
+
+    public void casillaTrampa(int x, int y){
+        Protagonista protagonista = Proveedor.getInstance().getProtagonista();
+        char[][] mapa = escenario.getMapa();
+        int vidanueva= protagonista.getVida();
+        System.out.println("Antes del if ="+ vidanueva);
+        if(mapa[x][y] == 'T'){
+            vidanueva = vidanueva-1;
+            System.out.println("He entrado en el if");
+            System.out.println("Nueva vida = "+vidanueva);
+            protagonista.setVida(vidanueva);
+            actualizarDatosProtagonista();
+        }
+        if(protagonista.getVida()==0){
+            SceneManager.getInstance().loadScene(SceneID.FINAL);
+        }
     }
 
     /**
